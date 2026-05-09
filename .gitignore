@@ -1,0 +1,39 @@
+# Kebele ID Management System - Git Ignore
+
+# Build output
+target/
+*.class
+dependency-reduced-pom.xml
+
+# Database files
+*.db
+*.db-journal
+backups/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# Eclipse
+.classpath
+.project
+.settings/
+bin/
+
+# NetBeans
+nbproject/
+nbbuild/
+dist/
+nbdist/
+
+# Temporary files
+*.log
+*.tmp
+*.bak
+*.swp
+*~
+
+# Packaged application
+KebeleIDSystem/

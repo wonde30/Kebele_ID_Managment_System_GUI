@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kebele ID Management System v2.0</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --green: #00ff88;
+            --green-dim: #00cc6a;
+            --green-dark: #003322;
+            --bg: #030a05;
+            --bg2: #070f08;
+            --border: #00ff8833;
+            --border-bright: #00ff8866;
+            --text: #c8ffd4;
+            --muted: #4a7a55;
+            --red: #ff3344;
+            --amber: #ffbb00;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Share Tech Mono', monospace;
+            min-height: 100vh;
+            overflow-x: hidden;
+            cursor: crosshair;
+        }
+        /* Scanline overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(0deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(0, 255, 136, 0.015) 2px,
+                    rgba(0, 255, 136, 0.015) 4px);
+            pointer-events: none;
+            z-index: 1000;
+        }
+        /* Grid background */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0, 255, 136, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 136, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 2rem 4rem;
+            position: relative;
+            z-index: 1;
+        }
+        /* ── HEADER ── */
+        .header {
+            border: 1px solid var(--border-bright);
+            padding: 2.5rem 2rem 2rem;
+            margin-bottom: 2rem;
+            position: relative;
+            animation: fadeIn 0.6s ease forwards;
+        }
+        .header::before {
+            content: '[ CLASSIFIED SYSTEM DOCUMENT ]';
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: var(--bg);
+            padding: 0 10px;
+            font-size: 11px;
+            color: var(--green);
+            letter-spacing: 3px;
+        }
+        .header::after {
+            content: '▶ ACTIVE';
+            position: absolute;
+            top: -10px;
+            right: 20px;
+            background: var(--bg);
+            padding: 0 10px;
+            font-size: 11px;
+            color: var(--red);
+            letter-spacing: 2px;
+            animation: blink 1.2s step-end infinite;
+        }
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+        .title {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: clamp(1.8rem, 5vw, 3rem);
+            font-weight: 700;
+            color: var(--green);
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            line-height: 1.1;
+            text-shadow: 0 0 30px rgba(0, 255, 136, 0.4);
+            animation: glitch 8s infinite;
+        }
+        @keyframes glitch {
+            0%,
+            94%,
+            100% {
+                text-shadow: 0 0 30px rgba(0, 255, 136, 0.4);
+                transform: none;
+            }
+            95% {
+                text-shadow: -2px 0 var(--red), 2px 0 #0af;
+                transform: skewX(-1deg);
+            }
+            96% {
+                text-shadow: 2px 0 var(--red), -2px 0 #0af;
+                transform: skewX(1deg);
+            }
+            97% {
+                text-shadow: 0 0 30px rgba(0, 255, 136, 0.4);
+                transform: none;
+            }
+        }
+        .subtitle {
+            font-size: 0.85rem;
+            color: var(--muted);
+            letter-spacing: 2px;
+            margin-top: 0.4rem;
+        }
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.8rem;
+            margin-top: 1.8rem;
+        }
+        .meta-item {
+            border-left: 2px solid var(--green);
+            padding-left: 0.8rem;
+        }
+        .meta-label {
+            font-size: 10px;
+            color: var(--muted);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .meta-value {
+            font-size: 0.9rem;
+            color: var(--green);
+            font-weight: 600;
+            margin-top: 2px;
+        }
+        /* ── SECTION ── */
+        .section {
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border);
+            position: relative;
+            animation: fadeIn 0.6s ease forwards;
+            opacity: 0;
+        }
+        .section:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+        .section:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+        .section:nth-child(4) {
+            animation-delay: 0.3s;
+        }
+        .section:nth-child(5) {
+            animation-delay: 0.4s;
+        }
+        .section:nth-child(6) {
+            animation-delay: 0.5s;
+        }
+        .section:nth-child(7) {
+            animation-delay: 0.6s;
+        }
+        .section:nth-child(8) {
+            animation-delay: 0.7s;
+        }
+        .section:nth-child(9) {
+            animation-delay: 0.8s;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .section-header {
+            background: rgba(0, 255, 136, 0.05);
+            border-bottom: 1px solid var(--border);
+            padding: 0.6rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        .section-num {
+            font-size: 10px;
+            color: var(--green);
+            border: 1px solid var(--border-bright);
+            padding: 1px 6px;
+            letter-spacing: 1px;
+        }
+        .section-title {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--green);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+        .section-body {
+            padding: 1.2rem 1rem;
+        }
+        /* ── DESCRIPTION ── */
+        .desc-text {
+            font-size: 0.82rem;
+            line-height: 1.8;
+            color: #8fcca0;
+            border-left: 2px solid var(--border-bright);
+            padding-left: 1rem;
+        }
+        /* ── HOW TO RUN ── */
+        .run-option {
+            margin-bottom: 1.2rem;
+        }
+        .run-label {
+            font-size: 10px;
+            color: var(--amber);
+            letter-spacing: 3px;
+            margin-bottom: 0.5rem;
+        }
+        .run-steps {
+            list-style: none;
+        }
+        .run-steps li {
+            font-size: 0.82rem;
+            color: var(--text);
+            padding: 0.3rem 0;
+            padding-left: 1.2rem;
+            position: relative;
+        }
+        .run-steps li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: var(--green);
+        }
+        .code-block {
+            background: rgba(0, 255, 136, 0.04);
+            border: 1px solid var(--border);
+            padding: 0.7rem 1rem;
+            font-size: 0.8rem;
+            color: var(--green);
+            letter-spacing: 1px;
+            margin: 0.5rem 0;
+            position: relative;
+            overflow-x: auto;
+        }
+        .code-block::before {
+            content: '$';
+            color: var(--muted);
+            margin-right: 0.5rem;
+        }
+        .login-box {
+            display: inline-grid;
+            grid-template-columns: auto auto;
+            gap: 0.3rem 1.5rem;
+            margin-top: 0.8rem;
+            background: rgba(0, 255, 136, 0.04);
+            border: 1px solid var(--border);
+            padding: 0.8rem 1.2rem;
+        }
+        .login-key {
+            font-size: 0.78rem;
+            color: var(--muted);
+        }
+        .login-val {
+            font-size: 0.78rem;
+            color: var(--green);
+        }
+        .warning-line {
+            font-size: 0.78rem;
+            color: var(--red);
+            margin-top: 0.8rem;
+            letter-spacing: 1px;
+        }
+        .warning-line::before {
+            content: '⚠  ';
+        }
+        /* ── FEATURES ── */
+        .feature-item {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(0, 255, 136, 0.07);
+        }
+        .feature-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .feature-title {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--green);
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-bottom: 0.4rem;
+        }
+        .feature-num {
+            font-size: 10px;
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid var(--border-bright);
+            padding: 1px 5px;
+            color: var(--green-dim);
+        }
+        .feature-list {
+            list-style: none;
+            padding-left: 1rem;
+        }
+        .feature-list li {
+            font-size: 0.78rem;
+            color: #7ab888;
+            padding: 0.15rem 0;
+            padding-left: 1rem;
+            position: relative;
+        }
+        .feature-list li::before {
+            content: '■';
+            position: absolute;
+            left: 0;
+            font-size: 6px;
+            top: 4px;
+            color: var(--green);
+        }
+        /* ── ROLES TABLE ── */
+        .roles-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.78rem;
+            margin-top: 0.5rem;
+        }
+        .roles-table th {
+            background: rgba(0, 255, 136, 0.08);
+            color: var(--green);
+            padding: 0.5rem 0.8rem;
+            text-align: left;
+            letter-spacing: 2px;
+            font-size: 10px;
+            border: 1px solid var(--border);
+        }
+        .roles-table td {
+            padding: 0.4rem 0.8rem;
+            border: 1px solid rgba(0, 255, 136, 0.06);
+            color: #8fcca0;
+        }
+        .roles-table tr:hover td {
+            background: rgba(0, 255, 136, 0.04);
+        }
+        .badge {
+            display: inline-block;
+            font-size: 9px;
+            padding: 1px 6px;
+            border: 1px solid;
+            letter-spacing: 1px;
+        }
+        .badge-admin {
+            color: var(--red);
+            border-color: var(--red);
+        }
+        .badge-reg {
+            color: var(--amber);
+            border-color: var(--amber);
+        }
+        .badge-appr {
+            color: #00aaff;
+            border-color: #00aaff;
+        }
+        .badge-view {
+            color: var(--muted);
+            border-color: var(--muted);
+        }
+        .badge-audit {
+            color: #aa88ff;
+            border-color: #aa88ff;
+        }
+        /* ── ARCHITECTURE ── */
+        .arch-diagram {
+            font-size: 0.72rem;
+            color: #5a9a6a;
+            line-height: 1.6;
+            letter-spacing: 0.5px;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+        }
+        .arch-diagram .highlight {
+            color: var(--green);
+        }
+        .arch-diagram .db {
+            color: var(--amber);
+        }
+        /* ── TECH STACK ── */
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 0.6rem;
+        }
+        .tech-item {
+            border: 1px solid var(--border);
+            padding: 0.6rem 0.8rem;
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+        .tech-item:hover {
+            border-color: var(--green-dim);
+        }
+        .tech-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 2px;
+            height: 100%;
+            background: var(--green);
+            opacity: 0.5;
+        }
+        .tech-name {
+            font-size: 0.82rem;
+            color: var(--green);
+            font-weight: 600;
+        }
+        .tech-role {
+            font-size: 10px;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-top: 2px;
+        }
+        /* ── FILES ── */
+        .file-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(0, 255, 136, 0.06);
+            font-size: 0.8rem;
+        }
+        .file-item:last-child {
+            border-bottom: none;
+        }
+        .file-name {
+            color: var(--green);
+            min-width: 280px;
+        }
+        .file-desc {
+            color: var(--muted);
+            font-size: 0.75rem;
+        }
+        .file-arrow {
+            color: var(--amber);
+            font-size: 10px;
+        }
+        /* ── NOTES ── */
+        .note-item {
+            font-size: 0.78rem;
+            color: #7ab888;
+            padding: 0.3rem 0;
+            padding-left: 1.2rem;
+            position: relative;
+        }
+        .note-item::before {
+            content: '//';
+            position: absolute;
+            left: 0;
+            color: var(--muted);
+            font-size: 10px;
+        }
+        /* ── DECLARATION ── */
+        .declaration-text {
+            font-size: 0.8rem;
+            color: #7ab888;
+            line-height: 1.8;
+            border-left: 2px solid var(--border-bright);
+            padding-left: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .sig-box {
+            border: 1px solid var(--border-bright);
+            padding: 1.2rem 1.5rem;
+            display: inline-block;
+            position: relative;
+        }
+        .sig-box::before {
+            content: '[ AUTHORIZED SIGNATURE ]';
+            position: absolute;
+            top: -9px;
+            left: 10px;
+            background: var(--bg);
+            padding: 0 8px;
+            font-size: 9px;
+            color: var(--green);
+            letter-spacing: 2px;
+        }
+        .sig-name {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--green);
+            letter-spacing: 3px;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+        }
+        .sig-id {
+            font-size: 0.75rem;
+            color: var(--muted);
+            letter-spacing: 2px;
+            margin-top: 4px;
+        }
+        .sig-date {
+            font-size: 0.7rem;
+            color: var(--muted);
+            margin-top: 2px;
+        }
+        /* ── FOOTER ── */
+        .footer {
+            margin-top: 2rem;
+            text-align: center;
+            font-size: 10px;
+            color: var(--muted);
+            letter-spacing: 3px;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+        /* ── CORNER DECORATIONS ── */
+        .corner-tl,
+        .corner-tr,
+        .corner-bl,
+        .corner-br {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+        }
+        .corner-tl {
+            top: -1px;
+            left: -1px;
+            border-top: 2px solid var(--green);
+            border-left: 2px solid var(--green);
+        }
+        .corner-tr {
+            top: -1px;
+            right: -1px;
+            border-top: 2px solid var(--green);
+            border-right: 2px solid var(--green);
+        }
+        .corner-bl {
+            bottom: -1px;
+            left: -1px;
+            border-bottom: 2px solid var(--green);
+            border-left: 2px solid var(--green);
+        }
+        .corner-br {
+            bottom: -1px;
+            right: -1px;
+            border-bottom: 2px solid var(--green);
+            border-right: 2px solid var(--green);
+        }
+        @media print {
+            body {
+                background: white;
+                color: black;
+                cursor: default;
+            }
+            body::before,
+            body::after {
+                display: none;
+            }
+            .title {
+                color: #003300;
+                text-shadow: none;
+            }
+            .section {
+                border-color: #333;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <div class="header" style="opacity:1; animation: fadeIn 0.4s ease forwards;">
+            <div class="corner-tl"></div>
+            <div class="corner-tr"></div>
+            <div class="corner-bl"></div>
+            <div class="corner-br"></div>
+            <div class="title">Kebele ID Management System</div>
+            <div class="subtitle">DESKTOP APPLICATION — KEBELE OFFICE ID RECORD MANAGEMENT — v2.0</div>
+            <div class="meta-grid">
+                <div class="meta-item">
+                    <div class="meta-label">Developer</div>
+                    <div class="meta-value">Wondatir Fetene</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">Student ID</div>
+                    <div class="meta-value">WOUR/2003/16</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">Version</div>
+                    <div class="meta-value">2.0 — Build 20260508</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">Platform</div>
+                    <div class="meta-value">Windows 10 / 11 (64-bit)</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">Submitted</div>
+                    <div class="meta-value">May 2026</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">University</div>
+                    <div class="meta-value">Wollo University</div>
+                </div>
+            </div>
+        </div>
+        <!-- DESCRIPTION -->
+        <div class="section">
+            <div class="corner-tl"></div>
+            <div class="corner-tr"></div>
+            <div class="corner-bl"></div>
+            <div class="corner-br"></div>
+            <div class="section-header">
+                <span class="section-num">01</span>
+                <span class="section-title">Description</span>
+            </div>
+            <div class="section-body">
+                <p class="desc-text">
+                    The Kebele ID Management System is a Java-based desktop application designed to digitize
+                    and streamline the management of resident identification records in kebele offices.
+                    The system replaces manual paper-based record keeping with a secure, role-based digital
+                    solution supporting ID card generation, approval workflows, and data reporting.
+                    All data is stored locally using SQLite — no internet connection required.
+                </p>
+            </div>
+        </div>
+        <!-- HOW TO RUN -->
+        <div class="section">
+            <div class="corner-tl"></div>
+            <div class="corner-tr"></div>
+            <div class="corner-bl"></div>
+            <div class="corner-br"></div>
+            <div class="section-header">
+                <span class="section-num">02</span>
+                <span class="section-title">How to Run</span>
+            </div>
+            <div class="section-body">
+                <div class="run-option">
+                    <div class="run-label">// OPTION A — EXECUTABLE (RECOMMENDED)</div>
+                    <ul class="run-steps">
+                        <li>Double-click <strong style="color:var(--green)">KebeleIDSystem.exe</strong></li>
+                        <li>If Windows SmartScreen appears: click <strong style="color:var(--amber)">"More
+                                info"</strong> → <strong style="color:var(--amber)">"Run anyway"</strong></li>
+                        <li>Login with default credentials below</li>
+                    </ul>
+                </div>
+                <div class="run-option">
+                    <div class="run-label">// OPTION B — JAR FILE</div>
+                    <div class="code-block">java -jar KebeleIDSystem-v2.0-build-20260508-205952.jar</div>
+                </div>
+                <div class="run-label">// DEFAULT LOGIN CREDENTIALS</div>
+                <div class="login-box">
+                    <span class="login-key">USERNAME</span><span class="login-val">wonde</span>
+                    <span class="login-key">PASSWORD</span><span class="login-val">wonde21</span>
+                </div>
+                <div class="warning-line">You Can Change Admin Username & Password.</div>
+            </div>
+        </div>
+        <!-- FEATURES -->
+        <div class="section">
+            <div class="corner-tl"></div>
+            <div class="corner-tr"></div>
+            <div class="corner-bl"></div>
+            <div class="corner-br"></div>
+            <div class="section-header">
+                <span class="section-num">03</span>
+                <span class="section-title">Features</span>
+            </div>
+            <div class="section-body">
+                <div class="feature-item">
+                    <div class="feature-title"><span class="feature-num">F-01</span> Resident Record Management</div>
+                    <ul class="feature-list">
+                        <li>Add, edit, delete, and search resident records</li>
+                        <li>Full profile with personal and address information</li>
+                    </ul>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-title"><span class="feature-num">F-02</span> ID Card Generation</div>
+                    <ul class="feature-list">
+                        <li>Automatic ID card creation with embedded QR code</li>
+                        <li>QR code links to resident record for instant verification</li>
+                    </ul>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-title"><span class="feature-num">F-03</span> Role-Based Access Control — 5 User
+                        Roles</div>
+                    <table class="roles-table">
+                        <thead>
+                            <tr>
+                                <th>ROLE</th>
+                                <th>ACCESS LEVEL</th>
+                                <th>PERMISSIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="badge badge-admin">ADMIN</span></td>
+                                <td>Full access</td>
+                                <td>System config, user management, all modules</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge badge-reg">SUPERVISOR</span></td>
+                                <td>Management</td>
+                                <td>Resident management, ID generation, reports</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge badge-appr">STAFF</span></td>
+                                <td>Operational</td>
+                                <td>Add/edit residents, generate ID cards</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge badge-view">DATA ENCODER</span></td>
+                                <td>Data entry</td>
+                                <td>Add and edit residents only</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge badge-audit">VIEWER</span></td>
+                                <td>Read-only</td>
+                                <td>View own linked record only</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-title"><span class="feature-num">F-04</span> Approval Workflow</div>
+                    <ul class="feature-list">
+                        <li>New registrations require approver sign-off before activation</li>
+                        <li>Prevents unauthorized or duplicate entries</li>
+                    </ul>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-title"><span class="feature-num">F-05</span> Reports & Data Export</div>
+                    <ul class="feature-list">
+                        <li>Export records to PDF using iText library</li>
+                        <li>Export records to Excel using Apache POI</li>
+                        <li>Summary reports for registered residents</li>
+                    </ul>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-title"><span class="feature-num">F-06</span> Activity Logging</div>
+                    <ul class="feature-list">
+                        <li>All user actions recorded with timestamp and user ID</li>
+                        <li>Full audit trail for accountability and review</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <!-- ARCHITECTURE -->
+        <div class="section">
+            <div class="corner-tl"></div>
+            <div class="corner-tr"></div>
+            <div class="corner-bl"></div>
+            <div class="corner-br"></div>
+            <div class="section-header">
+                <span class="section-num">04</span>
+                <span class="section-title">System Architecture</span>
+            </div>
+            <div class="section-body">
+                <pre class="arch-diagram">
+<span class="highlight">UI LAYER</span>          Java Swing — MVC Pattern
+<span class="highlight">BUSINESS LOGIC</span>   Service classes per module
+<span class="highlight">DATA LAYER</span>        SQLite — local, no server required
+<span class="highlight">BUILD TOOL</span>        Maven
+┌──────────────┐   ┌──────────────┐   ┌──────────────┐
+│  <span class="highlight">Auth &</span>         │   │  <span class="highlight">Resident</span>     │   │  <span class="highlight">ID Card</span>      │
+│  <span class="highlight">User Roles</span>  │──▶│  <span class="highlight">Records</span>       │──▶│  <span class="highlight">Generator</span>    │
+└──────────────┘   └──────────────┘   └──────────────┘
+       │                  │                 │
+       ▼                  ▼                 ▼
+┌──────────────┐   ┌──────────────┐   ┌──────────────┐
+│  <span class="highlight">Approval</span>     │   │  <span class="highlight">Reports &</span>    │   │  <span class="highlight">Activity</span>     │
+│  <span class="highlight">Workflow</span>     │   │  <span class="highlight">Export</span>       │   │  <span class="highlight">Logs</span>         │
+└──────────────┘   └──────────────┘   └──────────────┘
+                │
+        ┌──────────────┐
+        │  <span class="db">SQLite DB</span>     │
+        │  <span class="db">kebele_system.db</span> │
+        └──────────────┘</pre>
+            </div>
+        </div>
+        <!-- TECH STACK -->
+        <div class="section">
+            <div class="corner-tl"></div>
+            <div class="corner-tr"></div>
+            <div class="corner-bl"></div>
+            <div class="corner-br"></div>
+            <div class="section-header">
+                <span class="section-num">05</span>
+                <span class="section-title">Built With</span>
+            </div>
+            <div class="section-body">
+                <div class="tech-grid">
+                    <div class="tech-item">
+                        <div class="tech-name">Java 17</div>
+                        <div class="tech-role">CORE LANGUAGE</div>
+                    </div>
+                    <div class="tech-item">
+                        <div class="tech-name">Java Swing</div>
+                        <div class="tech-role">UI FRAMEWORK</div>
+                    </div>
+                    <div class="tech-item">
+                        <div class="tech-name">SQLite</div>
+                        <div class="tech-role">LOCAL DATABASE</div>
+                    </div>
+                    <div class="tech-item">
+                        <div class="tech-name">Maven</div>
+                        <div class="tech-role">BUILD TOOL</div>
+                    </div>
+                    <div class="tech-item">
+                        <div class="tech-name">BCrypt</div>
+                        <div class="tech-role">PASSWORD SECURITY</div>
+                    </div>
+                    <div class="tech-item">
+                        <div class="tech-name">Apache POI</div>
+                        <div class="tech-role">EXCEL EXPORT</div>
+                    </div>
+                    <div class="tech-item">
+                        <div class="tech-name">iText</div>
+                        <div class="tech-role">PDF EXPORT</div>
+                    </div>
+                    <div class="tech-item">
+                        <div class="tech-name">ZXing</div>
+                        <div class="tech-role">QR CODE ENGINE</div>
+                    </div>
+                    <div class="tech-item">
+                        <div class="tech-name">Launch4j</div>
+                        <div class="tech-role">EXE PACKAGING</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- REQUIREMENTS -->
+        <div class="section">
+            <div class="corner-tl"></div>
+            <div class="corner-tr"></div>
+            <div class="corner-bl"></div>
+            <div class="corner-br"></div>
+            <div class="section-header">
+                <span class="section-num">06</span>
+                <span class="section-title">System Requirements</span>
+            </div>
+            <div class="section-body">
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap:0.6rem;">
+                    <div class="tech-item">
+                        <div class="tech-name">Windows 10 / 11</div>
+                        <div class="tech-role">OPERATING SYSTEM (64-BIT)</div>
+                    </div>
+                    <div class="tech-item">
+                        <div class="tech-name">Java 17+</div>
+                        <div class="tech-role">RUNTIME — adoptium.net</div>
+                    </div>
+                    <div class="tech-item">
+                        <div class="tech-name">512 MB RAM</div>
+                        <div class="tech-role">MINIMUM (1 GB RECOMMENDED)</div>
+                    </div>
+                    <div class="tech-item">
+                        <div class="tech-name">100 MB Disk</div>
+                        <div class="tech-role">FREE STORAGE REQUIRED</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- FILES -->
+        <div class="section">
+            <div class="corner-tl"></div>
+            <div class="corner-tr"></div>
+            <div class="corner-bl"></div>
+            <div class="corner-br"></div>
+            <div class="section-header">
+                <span class="section-num">07</span>
+                <span class="section-title">Files Included</span>
+            </div>
+            <div class="section-body">
+                <div class="file-item">
+                    <span class="file-name">KebeleIDSystem.exe</span>
+                    <span class="file-arrow">◀</span>
+                    <span class="file-desc">Main executable — double-click to run (Windows)</span>
+                </div>
+                <div class="file-item">
+                    <span class="file-name">KebeleIDSystem-v2.0-build-20260508.jar</span>
+                    <span class="file-arrow">◀</span>
+                    <span class="file-desc">JAR file — requires Java 17 installed</span>
+                </div>
+                <div class="file-item">
+                    <span class="file-name">README.html</span>
+                    <span class="file-arrow">◀</span>
+                    <span class="file-desc">This document — open in any browser</span>
+                </div>
+            </div>
+        </div>
+        <!-- NOTES -->
+        <div class="section">
+            <div class="corner-tl"></div>
+            <div class="corner-tr"></div>
+            <div class="corner-bl"></div>
+            <div class="corner-br"></div>
+            <div class="section-header">
+                <span class="section-num">08</span>
+                <span class="section-title">Known Notes</span>
+            </div>
+            <div class="section-body">
+                <div class="note-item">First run may take a few seconds — database is initializing</div>
+                <div class="note-item">Database file (kebele_system.db) is created automatically on first run</div>
+                <div class="note-item">All data is stored locally — no internet connection required</div>
+                <div class="note-item">Default admin password must be changed after first login</div>
+                <div class="note-item">SmartScreen warning is normal for unsigned apps — click More info → Run anyway
+                </div>
+            </div>
+        </div>
+        <!-- DECLARATION -->
+        <div class="section">
+            <div class="corner-tl"></div>
+            <div class="corner-tr"></div>
+            <div class="corner-bl"></div>
+            <div class="corner-br"></div>
+            <div class="section-header">
+                <span class="section-num">09</span>
+                <span class="section-title">Developer Declaration</span>
+            </div>
+            <div class="section-body">
+                <p class="declaration-text">
+                    I declare that this project is my own original work, developed as part of my academic
+                    coursework at Wollo University. All third-party libraries used are open-source and
+                    properly credited. The Kebele ID Management System was designed, developed, tested,
+                    and packaged entirely by me.
+                </p>
+                <div class="sig-box">
+                    <div class="sig-name">WONDATIR FETENE</div>
+                    <div class="sig-id">STUDENT ID: WOUR/2003/16 // WOLLO UNIVERSITY</div>
+                    <div class="sig-date">MAY 2026</div>
+                </div>
+            </div>
+        </div>
+        <div class="footer">
+            KEBELE ID MANAGEMENT SYSTEM v2.0 /// WONDATIR FETENE /// WOUR/2003/16 /// MAY 2026
+        </div>
+    </div>
+</body>
+
+</html>
